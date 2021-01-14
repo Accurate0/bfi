@@ -5,13 +5,11 @@
 #include "io.h"
 #include "list.h"
 
-#define BF_TOTAL_COMMANDS 8
-
 typedef enum BF_COMMANDS {
-    INCREMENT_DATA = 0,
-    DECREMENT_DATA,
-    INCREMENT_PTR,
+    INCREMENT_PTR = 0,
     DECREMENT_PTR,
+    INCREMENT_DATA,
+    DECREMENT_DATA,
     OUTPUT_BYTE,
     INPUT_BYTE,
     LOOP_START,
@@ -42,7 +40,7 @@ typedef struct {
     uint32_t count;
 } bf_t;
 
-static const uint8_t BF_CHARACTERS[BF_TOTAL_COMMANDS] = {
+static const uint8_t BF_CHARACTERS[BF_COMMAND_END] = {
     '>',
     '<',
     '+',

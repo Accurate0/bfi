@@ -37,13 +37,15 @@ void input_byte(uint32_t count) {
     }
 }
 
-static const interpreter_command BF_FUNCTIONS[] = {
+static const interpreter_command BF_FUNCTIONS[BF_COMMAND_END] = {
     increment_ptr,
     decrement_ptr,
     increment_data,
     decrement_data,
     output_byte,
     input_byte,
+    NULL,
+    NULL,
 };
 
 

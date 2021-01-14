@@ -10,7 +10,7 @@
 __attribute__((optimize("unroll-loops")))
 bool ast_char_is_valid(int8_t c)
 {
-    for(int i = INCREMENT_DATA; i < BF_COMMAND_END; i++) {
+    for(int i = INCREMENT_PTR; i < BF_COMMAND_END; i++) {
         if(c == BF_CHARACTERS[i])
             return true;
     }
@@ -22,14 +22,14 @@ static ast_command_t ast_char_to_command(int8_t c)
 {
     switch(c) {
         case '>':
-            return INCREMENT_DATA;
+            return INCREMENT_PTR;
         case '<':
-            return DECREMENT_DATA;
+            return DECREMENT_PTR;
 
         case '+':
-            return INCREMENT_PTR;
+            return INCREMENT_DATA;
         case '-':
-            return DECREMENT_PTR;
+            return DECREMENT_DATA;
 
         case '.':
             return OUTPUT_BYTE;
