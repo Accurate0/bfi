@@ -91,9 +91,10 @@ static inline void ast_optimise_loop_node(node_t *node, list_t *loop, ast_comman
     switch(opt) {
         case CMD_OPT_CLEAR: {
             // no longer need the loop
-            list_free(loop, ast_free_node);
+            node->count -= loop->count;
             node->type = EXPR_OPT;
             node->value = CMD_OPT_CLEAR;
+            list_free(loop, ast_free_node);
         } break;
 
         default:
@@ -189,12 +190,16 @@ bf_t* ast_init(bool optimisations)
                 tmp->value = command;
                 list_add_end(current->children, tmp);
                 current->count++;
+                if(current != bf_prog->root)
+                    bf_prog->root->count++;
             } break;
             case CMD_LOOP_START: {
                 tmp->type = EXPR_LOOP;
                 tmp->children = list_init();
                 list_add_end(current->children, tmp);
                 current->count++;
+                if(current != bf_prog->root)
+                    bf_prog->root->count++;
                 current = tmp;
             } break;
             case CMD_LOOP_END: {
