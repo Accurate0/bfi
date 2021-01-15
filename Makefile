@@ -3,7 +3,7 @@ CFLAGS=-Wall -std=c99 -Wextra
 LDFLAGS=
 TARGET=bfi
 
-SOURCES=$(wildcard *.c)
+SOURCES=$(wildcard src/*.c)
 OBJ=${SOURCES:.c=.o}
 
 ifdef DEBUG
