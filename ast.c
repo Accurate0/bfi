@@ -7,8 +7,6 @@
 #include "list.h"
 #include "util.h"
 
-// trust me gcc, i know best
-__attribute__((optimize("unroll-loops")))
 inline bool ast_char_is_valid(int8_t c)
 {
     for(int i = CMD_INCREMENT_PTR; i < CMD_END; i++) {
