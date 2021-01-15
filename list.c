@@ -8,6 +8,7 @@ list_t* list_init(void)
     list_t *ret = malloc(sizeof(list_t));
     ret->head = NULL;
     ret->tail = NULL;
+    ret->count = 0;
 
     return ret;
 }
@@ -25,6 +26,8 @@ void list_add_end(list_t *list, void *value)
         list->tail->next = node;
         list->tail = node;
     }
+
+    list->count++;
 }
 
 
