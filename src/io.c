@@ -17,6 +17,11 @@ void io_open_file(const char *path)
     }
 }
 
+void io_set_file(FILE *file)
+{
+    f = file;
+}
+
 int8_t io_peek()
 {
     return current;

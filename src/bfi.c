@@ -1,7 +1,9 @@
 #define _POSIX_C_SOURCE 2
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "io.h"
 #include "ast.h"
@@ -11,7 +13,26 @@
 
 static void help(const char *name)
 {
-    printf("%s [ -i | -c | -a | -o | -h ] filename ...\n", name);
+    printf("%s [ -i | -c | -a ] [ -o | -h ] filename ...\n", name);
+}
+
+static void run(bool optimisations, bool jit, bool ast, bool interpret)
+{
+    bf_t *prog = ast_init(optimisations);
+
+    if(optimisations)
+        ast_optimise(prog->root);
+
+    if(ast)
+        ast_stats(prog);
+
+    if(interpret)
+        interpreter_run(prog->root);
+
+    if(jit)
+        jit_run(prog->root);
+
+    ast_free(prog);
 }
 
 int main(int argc, char *const argv[])
@@ -41,35 +62,30 @@ int main(int argc, char *const argv[])
         }
     }
 
-    if(!(argc - optind)) {
-        help(argv[0]);
-        die("not enough arguments");
-    }
-
     if(!(interpret || jit || ast)) {
         help(argv[0]);
         die("must pick at least one execution type");
     }
 
-    for (int i = optind; i < argc; i++) {
-        io_open_file(argv[i]);
-        bf_t *prog = ast_init(optimisations);
-        io_close_file();
+    int remainder = argc - optind;
+    bool read_stdin = (remainder == 1 && !strcmp(argv[optind], "-"))
+                   || (remainder == 0);
 
-        if(optimisations)
-            ast_optimise(prog->root);
+    if(read_stdin) {
+        io_set_file(stdin);
 
-        if(ast)
-            ast_stats(prog);
+        run(optimisations, jit, ast, interpret);
 
-        if(interpret)
-            interpreter_run(prog->root);
-
-        if(jit)
-            jit_run(prog->root);
-
-        ast_free(prog);
+        return EXIT_SUCCESS;
     }
 
-    return 0;
+    for (int i = optind; i < argc; i++) {
+        io_open_file(argv[i]);
+
+        run(optimisations, jit, ast, interpret);
+
+        io_close_file();
+    }
+
+    return EXIT_SUCCESS;
 }
