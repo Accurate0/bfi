@@ -16,6 +16,7 @@ TODO:
   - [ ] generate LLVM IR to feed to LLVM
   - [ ] expand this todo list
   - [ ] remove recursion to handle bigger programs (haven't had a stack overflow yet but...)
+  - [ ] switch to an objectively better build system (cmake/meson + ninja)
 
 pros:
   - simple
