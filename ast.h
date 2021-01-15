@@ -59,4 +59,5 @@ static const uint8_t BF_CHARACTERS[CMD_END] = {
 bool ast_char_is_valid(int8_t c);
 bf_t* ast_init(bool optimisations);
 void ast_optimise(node_t *root);
+void ast_stats(bf_t *prog);
 void ast_free(bf_t *bf);

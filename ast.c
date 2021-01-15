@@ -217,3 +217,8 @@ bf_t* ast_init(bool optimisations)
 
     return bf_prog;
 }
+
+void ast_stats(bf_t *prog)
+{
+    (void)prog;
+}

@@ -7,25 +7,30 @@
 #include "ast.h"
 #include "util.h"
 #include "interpreter.h"
+#include "jit.h"
 
 static void help(const char *name)
 {
-    printf("%s [ -i | -j | -o | -h ] filename ...\n", name);
+    printf("%s [ -i | -c | -a | -o | -h ] filename ...\n", name);
 }
 
 int main(int argc, char *const argv[])
 {
+    bool ast = false;
     bool jit = false;
     bool interpret = false;
     bool optimisations = true;
     int c;
-    while((c = getopt(argc, argv, "iohj")) != -1) {
+    while((c = getopt(argc, argv, "iohja")) != -1) {
         switch(c) {
             case 'j':
                 jit = true;
                 break;
             case 'i':
                 interpret = true;
+                break;
+            case 'a':
+                ast = true;
                 break;
             case 'o':
                 optimisations = false;
@@ -41,7 +46,7 @@ int main(int argc, char *const argv[])
         die("not enough arguments");
     }
 
-    if(!(interpret || jit)) {
+    if(!(interpret || jit || ast)) {
         help(argv[0]);
         die("must pick at least one execution type");
     }
@@ -54,8 +59,14 @@ int main(int argc, char *const argv[])
         if(optimisations)
             ast_optimise(prog->root);
 
+        if(ast)
+            ast_stats(prog);
+
         if(interpret)
             interpreter_run(prog->root);
+
+        if(jit)
+            jit_run(prog->root);
 
         ast_free(prog);
     }
