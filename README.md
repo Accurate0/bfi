@@ -8,6 +8,7 @@ TODO:
       - [ ] multiplication loops
       - [ ] scan loops
       - [ ] operation offsets
+  - [ ] simplify or potentially remove AST (memory)
   - [ ] try guessing how much memory is needed for execution
   - [ ] dynamically adjust memory during execution (incase guess fails)
   - [ ] generate code and execute in memory
@@ -23,3 +24,4 @@ pros:
 cons:
   - naive
   - minimal optimisations
+  - memory hungry due to AST (although gcc allocates 188,662 bytes with no input, are we the evil ones?)
