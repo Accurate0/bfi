@@ -4,6 +4,7 @@ TODO:
   - [x] interpret AST at runtime
   - [ ] optimise the AST (http://calmerthanyouare.org/2015/01/07/optimizing-brainfuck.html)
       - [x] clear loops
+      - [ ] simplification (+x5 -x3 == +x2)
       - [ ] copy loops
       - [ ] multiplication loops
       - [x] scan loops
