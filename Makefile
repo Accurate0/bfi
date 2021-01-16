@@ -7,8 +7,7 @@ SOURCES=$(wildcard src/*.c)
 OBJ=${SOURCES:.c=.o}
 
 ifdef DEBUG
-	CFLAGS+=-g -DDEBUG -fsanitize=leak
-	LDFLAGS+=-llsan
+	CFLAGS+=-ggdb3 -DDEBUG
 else
 	CFLAGS+=-O3
 endif
