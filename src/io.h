@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 #include <stdint.h>
 
 void io_open_file(const char *path);
