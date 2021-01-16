@@ -6,7 +6,7 @@ TODO:
       - [x] clear loops
       - [ ] copy loops
       - [ ] multiplication loops
-      - [ ] scan loops
+      - [x] scan loops
       - [ ] operation offsets
   - [ ] simplify or potentially remove AST (memory)
   - [ ] try guessing how much memory is needed for execution
