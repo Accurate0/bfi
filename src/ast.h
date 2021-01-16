@@ -18,6 +18,8 @@ typedef enum BF_COMMANDS {
     CMD_OPT_BEGIN,
     CMD_OPT_NONE,
     CMD_OPT_CLEAR,
+    CMD_OPT_SCAN_LEFT,
+    CMD_OPT_SCAN_RIGHT,
     CMD_OPT_END,
 } ast_command_t;
 

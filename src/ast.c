@@ -89,11 +89,13 @@ void ast_free(bf_t *bf)
 static inline void ast_optimise_loop_node(node_t *node, list_t *loop, ast_command_t opt)
 {
     switch(opt) {
+        case CMD_OPT_SCAN_RIGHT:
+        case CMD_OPT_SCAN_LEFT:
         case CMD_OPT_CLEAR: {
             // no longer need the loop
             node->count -= loop->count;
             node->type = EXPR_OPT;
-            node->value = CMD_OPT_CLEAR;
+            node->value = opt;
             list_free(loop, ast_free_node);
         } break;
 
@@ -117,12 +119,25 @@ void ast_optimise(node_t *root)
                 break;
 
             case EXPR_LOOP: {
-                // check for clear loop optimisation potential
                 list_t *loop = node->children;
                 if(loop->count == 1) {
                     node_t *first = ((node_t*)loop->head->value);
-                    if(first->type == EXPR_DATA && first->value == CMD_DECREMENT_DATA) {
-                        optimise = CMD_OPT_CLEAR;
+
+                    // check for clear loop optimisation potential
+                    if(first->type == EXPR_DATA) {
+                        if(first->value == CMD_DECREMENT_DATA)
+                            optimise = CMD_OPT_CLEAR;
+                        else if(first->value == CMD_INCREMENT_DATA)
+                            optimise = CMD_OPT_CLEAR;
+                    }
+
+                    // figure out why node count is need to prevent
+                    // hanoi from going ham
+                    if(node->count == 1 && first->type == EXPR_PTR) {
+                        if(first->value == CMD_INCREMENT_PTR)
+                            optimise = CMD_OPT_SCAN_RIGHT;
+                        else if(first->value == CMD_DECREMENT_PTR)
+                            optimise = CMD_OPT_SCAN_LEFT;
                     }
                 }
 
@@ -155,9 +170,9 @@ bf_t* ast_init(bool optimisations)
     current->count = 0;
     current->children = list_init();
 
-    node_t *tmp;
     int8_t c;
     while((c = io_read_next()) != EOF) {
+        node_t *tmp;
         ast_command_t command = ast_char_to_command(c);
         if(command != CMD_LOOP_END) {
             tmp = malloc(sizeof(node_t));
@@ -197,10 +212,9 @@ bf_t* ast_init(bool optimisations)
                 tmp->type = EXPR_LOOP;
                 tmp->children = list_init();
                 list_add_end(current->children, tmp);
-                current->count++;
+                current = tmp;
                 if(current != bf_prog->root)
                     bf_prog->root->count++;
-                current = tmp;
             } break;
             case CMD_LOOP_END: {
                 current = current->parent;
@@ -218,7 +232,66 @@ bf_t* ast_init(bool optimisations)
     return bf_prog;
 }
 
+static void ast_print_spaces(int spaces)
+{
+    for (int i = 0; i < spaces; i++)
+    {
+        printf(" ");
+    }
+
+}
+
+static char* ast_val_to_str(ast_command_t val)
+{
+    switch(val) {
+        case CMD_INCREMENT_PTR:
+            return "inc_ptr";
+        case CMD_DECREMENT_PTR:
+            return "dec_ptr";
+        case CMD_INCREMENT_DATA:
+            return "inc_data";
+        case CMD_DECREMENT_DATA:
+            return "dec_data";
+        case CMD_OUTPUT_BYTE:
+            return "output";
+        case CMD_INPUT_BYTE:
+            return "input";
+        case CMD_OPT_CLEAR:
+            return "clearloop";
+        case CMD_OPT_SCAN_LEFT:
+            return "scan_left";
+        case CMD_OPT_SCAN_RIGHT:
+            return "scan_right";
+
+        default:
+            UNREACHABLE();
+    }
+}
+
+static void ast_dump(node_t *node, int spaces)
+{
+    LIST_FOREACH(node->children, c) {
+        node_t *n = c->value;
+        switch(n->type) {
+            case EXPR_OPT:
+            case EXPR_PTR:
+            case EXPR_DATA:
+            case EXPR_IO: {
+                ast_print_spaces(spaces);
+                printf("%s:%d\n", ast_val_to_str(n->value), n->count);
+            } break;
+
+            case EXPR_LOOP: {
+                ast_dump(n, spaces + 4);
+            } break;
+
+            default:
+                UNREACHABLE();
+        }
+    }
+}
+
 void ast_stats(bf_t *prog)
 {
-    (void)prog;
+    ast_dump(prog->root, 0);
 }

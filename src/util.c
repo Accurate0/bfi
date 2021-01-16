@@ -46,7 +46,7 @@ void warn(const char *f, ...)
 }
 
 
-#undef DEBUG
+// #undef DEBUG
 void debug(const char *f, ...)
 {
 #ifdef DEBUG
