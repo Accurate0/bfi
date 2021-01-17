@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#define ANSI_RED      "\e[31m"
-#define ANSI_YELLOW   "\e[33m"
-#define ANSI_RESET    "\e[0m"
+#include "util.h"
 
 __attribute__((noreturn)) void crash(const char *f, ...)
 {

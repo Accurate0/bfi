@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
+#include <time.h>
 
 #include "ast.h"
 #include "io.h"
@@ -41,7 +43,7 @@ static inline ast_command_t ast_char_to_command(int8_t c)
             return CMD_LOOP_END;
 
         default:
-            return -1;
+            UNREACHABLE();
     }
 }
 
@@ -65,7 +67,7 @@ static inline ast_expr_t ast_command_to_expr(ast_command_t c)
             return EXPR_LOOP;
 
         default:
-            return -1;
+            UNREACHABLE();
     }
 }
 
@@ -160,6 +162,7 @@ void ast_optimise(node_t *root)
 
 bf_t* ast_init(bool optimisations)
 {
+    clock_t begin = clock();
     bf_t *bf_prog = malloc(sizeof(bf_t));
     bf_prog->root = malloc(sizeof(node_t));
     bf_prog->count = 1;
@@ -170,28 +173,72 @@ bf_t* ast_init(bool optimisations)
     current->count = 0;
     current->children = list_init();
 
-    int8_t c;
-    while((c = io_read_next()) != EOF) {
-        node_t *tmp;
+    for(int8_t c = io_read_next(); c != EOF; c = io_read_next()) {
         ast_command_t command = ast_char_to_command(c);
-        if(command != CMD_LOOP_END) {
-            tmp = malloc(sizeof(node_t));
-            tmp->count = 1;
-            tmp->parent = current;
+        int32_t count = 1;
+
+        if(command == CMD_DECREMENT_DATA || command == CMD_DECREMENT_PTR)
+            count = -1;
+
+        // simplify ++/-- and >>/<< instructions into a single instruction and count;
+        if(optimisations && ast_command_to_expr(command) != EXPR_LOOP) {
+            for(int8_t peek = io_peek(); peek != EOF; peek = io_peek())
+            {
+                ast_command_t peeked = ast_char_to_command(peek);
+                if(ast_command_to_expr(peeked) != ast_command_to_expr(command))
+                    break;
+
+                switch(peeked)
+                {
+                    case CMD_OUTPUT_BYTE:
+                    case CMD_INPUT_BYTE:
+                    case CMD_INCREMENT_DATA:
+                    case CMD_INCREMENT_PTR:
+                        count++;
+                        break;
+
+                    case CMD_DECREMENT_DATA:
+                    case CMD_DECREMENT_PTR:
+                        count--;
+                        break;
+
+                    default:
+                        printf("%d\n", peeked);
+                        UNREACHABLE();
+                }
+
+                (void)io_read_next();
+            }
+
+            // we resolved the +/> and -/< down to nothing
+            // we can simply skip creating this node
+            // * This continues on the main loop
+            if(count == 0)
+                continue;
+
+            if(count < 0) {
+                if(command == CMD_INCREMENT_DATA)
+                    command = CMD_DECREMENT_DATA;
+
+                if(command == CMD_INCREMENT_PTR)
+                    command = CMD_DECREMENT_PTR;
+            } else {
+                if(command == CMD_DECREMENT_DATA)
+                    command = CMD_INCREMENT_DATA;
+
+                if(command == CMD_DECREMENT_PTR)
+                    command = CMD_INCREMENT_PTR;
+            }
         }
 
-        // if we're optimising, compress +++++ into +x5
-        // it's easier to do this when creating the AST
-        // also saves on allocations if this is done now
-        // instead of during the optimisation pass
-        // this alone saves nearly 10 seconds on hanoi.bf
-        if(optimisations) {
-            if(command != CMD_LOOP_START && command != CMD_LOOP_END) {
-                while(c == io_peek()) {
-                    tmp->count++;
-                    (void)io_read_next();
-                }
-            }
+        node_t *new;
+        // save a little by not allocating loop ends
+        // loop ends just change the scope by returning
+        // to the parent node
+        if(command != CMD_LOOP_END) {
+            new = malloc(sizeof(node_t));
+            new->count = abs(count);
+            new->parent = current;
         }
 
         switch(command) {
@@ -201,20 +248,20 @@ bf_t* ast_init(bool optimisations)
             case CMD_INPUT_BYTE:
             case CMD_INCREMENT_DATA:
             case CMD_DECREMENT_DATA: {
-                tmp->type = ast_command_to_expr(command);
-                tmp->value = command;
-                list_add_end(current->children, tmp);
+                new->type = ast_command_to_expr(command);
+                new->value = command;
+                list_add_end(current->children, new);
                 current->count++;
                 if(current != bf_prog->root)
                     bf_prog->root->count++;
             } break;
             case CMD_LOOP_START: {
-                tmp->type = EXPR_LOOP;
-                tmp->children = list_init();
-                list_add_end(current->children, tmp);
-                current = tmp;
-                if(current != bf_prog->root)
-                    bf_prog->root->count++;
+                new->type = EXPR_LOOP;
+                new->children = list_init();
+                list_add_end(current->children, new);
+                current = new;
+                // ? loops don't count as instructions in our ast
+                // ? maybe they should
             } break;
             case CMD_LOOP_END: {
                 current = current->parent;
@@ -229,46 +276,52 @@ bf_t* ast_init(bool optimisations)
         warn("unterminated loop detected");
     }
 
+
+    bf_prog->generation_time = (double)(clock() - begin) / CLOCKS_PER_SEC;
+
     return bf_prog;
 }
 
-static void ast_print_spaces(int spaces)
+static void ast_printf(int spaces, const char *format, ...)
 {
-    for (int i = 0; i < spaces; i++)
-    {
-        printf(" ");
-    }
+    va_list args;
+    va_start(args, format);
 
+    printf("%*s", spaces, "");
+    vprintf(format, args);
+    putchar('\n');
+
+    va_end(args);
 }
 
-static char* ast_val_to_str(ast_command_t val)
+static char* ast_cmd_to_str(ast_command_t val)
 {
     switch(val) {
         case CMD_INCREMENT_PTR:
-            return "inc_ptr";
+            return "CMD_INCREMENT_PTR";
         case CMD_DECREMENT_PTR:
-            return "dec_ptr";
+            return "CMD_DECREMENT_PTR";
         case CMD_INCREMENT_DATA:
-            return "inc_data";
+            return "CMD_INCREMENT_DATA";
         case CMD_DECREMENT_DATA:
-            return "dec_data";
+            return "CMD_DECREMENT_DATA";
         case CMD_OUTPUT_BYTE:
-            return "output";
+            return "CMD_OUTPUT_BYTE";
         case CMD_INPUT_BYTE:
-            return "input";
+            return "CMD_INPUT_BYTE";
         case CMD_OPT_CLEAR:
-            return "clearloop";
+            return "CMD_OPT_CLEAR";
         case CMD_OPT_SCAN_LEFT:
-            return "scan_left";
+            return "CMD_OPT_SCAN_LEFT";
         case CMD_OPT_SCAN_RIGHT:
-            return "scan_right";
+            return "CMD_OPT_SCAN_RIGHT";
 
         default:
             UNREACHABLE();
     }
 }
 
-static void ast_dump(node_t *node, int spaces)
+static void ast_dump_internal(node_t *node, int spaces)
 {
     LIST_FOREACH(node->children, c) {
         node_t *n = c->value;
@@ -277,12 +330,13 @@ static void ast_dump(node_t *node, int spaces)
             case EXPR_PTR:
             case EXPR_DATA:
             case EXPR_IO: {
-                ast_print_spaces(spaces);
-                printf("%s:%d\n", ast_val_to_str(n->value), n->count);
+                ast_printf(spaces, "%-18s : %d", ast_cmd_to_str(n->value), n->count);
             } break;
 
             case EXPR_LOOP: {
-                ast_dump(n, spaces + 4);
+                ast_printf(spaces, "CMD_LOOP_START");
+                ast_dump_internal(n, spaces + 4);
+                ast_printf(spaces, "CMD_LOOP_END");
             } break;
 
             default:
@@ -290,8 +344,16 @@ static void ast_dump(node_t *node, int spaces)
         }
     }
 }
+static void ast_dump(node_t *node)
+{
+    ast_dump_internal(node, 0);
+}
+
 
 void ast_stats(bf_t *prog)
 {
-    ast_dump(prog->root, 0);
+    printf(ANSI_BLUE "%-18s : COUNT\n" ANSI_RESET, "INSTRUCTION");
+    ast_dump(prog->root);
+    printf(ANSI_BLUE "instructions: %d\n" ANSI_RESET, prog->root->count);
+    printf(ANSI_BLUE "generation: %fs\n" ANSI_RESET, prog->generation_time);
 }

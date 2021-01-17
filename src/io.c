@@ -37,7 +37,7 @@ static int8_t io_find_next()
 int8_t io_read_next()
 {
     if(!f)
-        return -1;
+        return EOF;
 
     if(current == -1)
         current = io_find_next();

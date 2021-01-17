@@ -4,11 +4,12 @@ TODO:
   - [x] interpret AST at runtime
   - [ ] optimise the AST (http://calmerthanyouare.org/2015/01/07/optimizing-brainfuck.html)
       - [x] clear loops
-      - [ ] simplification (+x5 -x3 == +x2)
+      - [x] simplification (+x5 -x3 == +x2)
       - [ ] copy loops
       - [ ] multiplication loops
       - [x] scan loops
       - [ ] operation offsets
+  - [ ] mmap the file instead of reading char by char
   - [ ] simplify or potentially remove AST (memory)
   - [ ] try guessing how much memory is needed for execution
   - [ ] dynamically adjust memory during execution (incase guess fails)

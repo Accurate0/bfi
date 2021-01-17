@@ -43,6 +43,7 @@ typedef struct node_t {
 } node_t;
 
 typedef struct {
+    double generation_time;
     node_t *root;
     uint32_t count;
 } bf_t;

@@ -11,3 +11,9 @@ void warn(const char *f, ...);
         crash("%s:%s:%d -> unreachable statement", __FILE__, __func__, __LINE__); \
         __builtin_unreachable(); \
     } while(0)
+
+#define ANSI_RED      "\e[31m"
+#define ANSI_GREEN    "\e[32m"
+#define ANSI_YELLOW   "\e[33m"
+#define ANSI_BLUE     "\e[34m"
+#define ANSI_RESET    "\e[0m"
