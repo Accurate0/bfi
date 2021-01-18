@@ -9,7 +9,7 @@ OBJ=${SOURCES:.c=.o}
 ifdef DEBUG
 	CFLAGS+=-ggdb3 -DDEBUG
 else
-	CFLAGS+=-O3
+	CFLAGS+=-O2
 endif
 
 .c.o:
