@@ -11,7 +11,7 @@
 
 inline bool ast_char_is_valid(int8_t c)
 {
-    for(int i = CMD_INCREMENT_PTR; i < CMD_END; i++) {
+    for(int i = CMD_INCREMENT_PTR; i < CMD_LOOP_END + 1; i++) {
         if(c == BF_CHARACTERS[i])
             return true;
     }

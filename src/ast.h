@@ -14,20 +14,19 @@ typedef enum BF_COMMANDS {
     CMD_INPUT_BYTE,
     CMD_LOOP_START,
     CMD_LOOP_END,
-    CMD_END,
-    CMD_OPT_BEGIN,
-    CMD_OPT_NONE,
+    // CMD_END,
+    // CMD_OPT_BEGIN,
     CMD_OPT_CLEAR,
     CMD_OPT_SCAN_LEFT,
     CMD_OPT_SCAN_RIGHT,
-    CMD_OPT_END,
+    CMD_OPT_NONE,
 } ast_command_t;
 
 typedef enum {
+    EXPR_LOOP,
     EXPR_ROOT,
     EXPR_DATA,
     EXPR_PTR,
-    EXPR_LOOP,
     EXPR_IO,
     EXPR_OPT,
 } ast_expr_t;
@@ -48,7 +47,7 @@ typedef struct {
     uint32_t count;
 } bf_t;
 
-static const uint8_t BF_CHARACTERS[CMD_END] = {
+static const uint8_t BF_CHARACTERS[CMD_LOOP_END + 1] = {
     '>',
     '<',
     '+',
