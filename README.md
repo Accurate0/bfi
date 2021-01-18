@@ -9,7 +9,6 @@ TODO:
       - [ ] multiplication loops
       - [x] scan loops
       - [ ] operation offsets
-  - [ ] mmap the file instead of reading char by char
   - [ ] simplify or potentially remove AST (memory)
   - [ ] try guessing how much memory is needed for execution
   - [ ] dynamically adjust memory during execution (incase guess fails)
