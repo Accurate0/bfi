@@ -1,91 +1,114 @@
+#include "asm.h"
+#include <string.h>
+#include <unistd.h>
 #define _GNU_SOURCE
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <sys/mman.h>
 
-#include "jit.h"
 #include "ast.h"
+#include "jit.h"
 #include "util.h"
-#include "str.h"
 
-typedef void (*compiled_function)();
-static int32_t BF_DATA[30000] = {0,};
-static int32_t *BF_PTR = BF_DATA;
-static int32_t JIT_INDEX = 0;
+typedef void (*compiled_function)(int32_t *data);
+static int32_t BF_DATA[30000] = {
+    0,
+};
 
-static uint32_t jit_generate_code(node_t *node, str_t *str, uint32_t size)
-{
-    (void)str;
-    LIST_FOREACH(node->children, c) {
-        node_t *node = c->value;
+static size_t jit_generate_code(node_t *node, asm_t *assembler, size_t size) {
+  LIST_FOREACH(node->children, c) {
+    node_t *node = c->value;
 
-        switch(node->type) {
-            case EXPR_PTR:
-            case EXPR_DATA:
-            case EXPR_IO:
-            case EXPR_OPT: {
-                switch(node->value) {
-                    case CMD_INCREMENT_PTR:
-                        break;
+    // RDI is data
+    switch (node->type) {
+    case EXPR_PTR:
+    case EXPR_DATA:
+    case EXPR_IO:
+    case EXPR_OPT: {
+      switch (node->value) {
+      case CMD_INCREMENT_PTR:
+        asm_emit8(assembler, 0xFF);
+        asm_emit8(assembler, 0xC7);
+        size += 2;
+        break;
 
-                    case CMD_DECREMENT_PTR:
-                        break;
+      case CMD_DECREMENT_PTR:
+        asm_emit8(assembler, 0xFF);
+        asm_emit8(assembler, 0xCF);
+        size += 2;
+        break;
 
-                    case CMD_INCREMENT_DATA:
-                        break;
+      case CMD_INCREMENT_DATA:
+        asm_emit8(assembler, 0xFF);
+        asm_emit8(assembler, 0x07);
+        size += 2;
+        break;
 
-                    case CMD_DECREMENT_DATA:
-                        break;
+      case CMD_DECREMENT_DATA:
+        asm_emit8(assembler, 0xFF);
+        asm_emit8(assembler, 0x0F);
+        size += 2;
+        break;
 
-                    case CMD_OUTPUT_BYTE:
-                        break;
+      case CMD_OUTPUT_BYTE:
+        break;
 
-                    case CMD_INPUT_BYTE:
-                        break;
+      case CMD_INPUT_BYTE:
+        break;
 
-                    case CMD_OPT_CLEAR:
-                        break;
+      case CMD_OPT_CLEAR:
+        asm_emit8(assembler, 0xC7);
+        asm_emit8(assembler, 0x07);
+        asm_emit32(assembler, 0x00);
+        size += 4;
+        break;
 
-                    default:
-                        UNREACHABLE();
-                }
-            } break;
+      default:
+        UNREACHABLE();
+      }
+    } break;
 
-            case EXPR_LOOP: {
-                // cmp [register] 0
-                // size of code = recursively generate code
-                // je current_addr + size_of_code
-                // continue otherwise
-                // at end jmp back to beginning
-            } break;
+    case EXPR_LOOP: {
+      // loop is something like
+      // while(*RDI != 0) = [
+      // when RDI == 0 JMP to ] + 1
+      // else JMP to [ + 1
+      // execute inner code ...
+      // jit_generate_code
+      // jmp back to start ]
 
-            default:
-                UNREACHABLE();
-        }
+      // cmp [register] 0
+      // size of code = recursively generate code
+      // je current_addr + size_of_code
+      // continue otherwise
+      // at end jmp back to beginning
+    } break;
+
+    default:
+      UNREACHABLE();
     }
+  }
 
-    return size;
+  asm_emit8(assembler, 0xC3);
+  size += 1;
+
+  return size;
 }
 
-typedef void (*jit_function)();
+void jit_run(node_t *node) {
+  asm_t *assembler = asm_init();
+  size_t size = jit_generate_code(node, assembler, 0);
 
-void jit_run(node_t *node)
-{
-    (void)JIT_INDEX;
-    (void)BF_PTR;
-    // pretend we average 6 bytes per AST node
-    // this will be increase as needed
-    // this only needs to be healthy initial value
-    str_t *str = str_init(node->count * 6);
-    // GENERATE THE CODE FIRST
-    size_t size = jit_generate_code(node, str, 0);
-    // ALLOCATE MEMORY
-    void *ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    // EXECUTE MEMORY
-    mprotect(ptr, size, PROT_READ | PROT_EXEC);
-    // ((compiled_function)ptr)();
-    // FREE
-    str_free(str);
-    munmap(ptr, size);
+  void *ptr =
+      mmap(NULL, size * sizeof(uint8_t), PROT_READ | PROT_WRITE | PROT_EXEC,
+           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  memcpy(ptr, assembler->output, size * sizeof(uint8_t));
+  write(STDOUT_FILENO, ptr, size * sizeof(uint8_t));
+  fflush(stdout);
+
+  ((compiled_function)ptr)(BF_DATA);
+
+  asm_free(assembler);
+  munmap(ptr, size);
 }
