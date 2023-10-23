@@ -28,36 +28,42 @@ static size_t jit_generate_code(node_t *node, asm_t *assembler, size_t size) {
     case EXPR_OPT: {
       switch (node->value) {
       case CMD_INCREMENT_PTR:
+        // inc rdi
         asm_emit8(assembler, 0xFF);
         asm_emit8(assembler, 0xC7);
         size += 2;
         break;
 
       case CMD_DECREMENT_PTR:
+        // dec rdi
         asm_emit8(assembler, 0xFF);
         asm_emit8(assembler, 0xCF);
         size += 2;
         break;
 
       case CMD_INCREMENT_DATA:
+        // inc [rdi]
         asm_emit8(assembler, 0xFF);
         asm_emit8(assembler, 0x07);
         size += 2;
         break;
 
       case CMD_DECREMENT_DATA:
+        // dec [rdi]
         asm_emit8(assembler, 0xFF);
         asm_emit8(assembler, 0x0F);
         size += 2;
         break;
 
       case CMD_OUTPUT_BYTE:
+        // need to preserve rdi to syscall
         break;
 
       case CMD_INPUT_BYTE:
         break;
 
       case CMD_OPT_CLEAR:
+        // mov dword [rdi], 0x0
         asm_emit8(assembler, 0xC7);
         asm_emit8(assembler, 0x07);
         asm_emit32(assembler, 0x00);
