@@ -58,8 +58,6 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
         break;
 
       case CMD_OUTPUT_BYTE:
-        // TODO: handle count
-        // do in 1 syscall instead of many?
         // mov rbx, rdi
         asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x89);
@@ -73,7 +71,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
         asm_emit8(assembler, 0xBF);
         asm_emit32(assembler, 1);
 
-        // lea rsi, [rdi]
+        // lea rsi, rbx
         asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x8D);
         asm_emit8(assembler, 0x33);
@@ -82,9 +80,12 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
         asm_emit8(assembler, 0xBA);
         asm_emit32(assembler, 1);
 
-        // syscall
-        asm_emit8(assembler, 0x0F);
-        asm_emit8(assembler, 0x05);
+        // FIXME: syscall in a loop lmao
+        for (uint32_t i = 0; i < count; i++) {
+          // syscall
+          asm_emit8(assembler, 0x0F);
+          asm_emit8(assembler, 0x05);
+        }
 
         // mov rdi, rbx
         asm_emit8(assembler, 0x48);
@@ -156,7 +157,17 @@ void jit_run(node_t *node) {
   fflush(stdout);
 #endif
 
+  __asm__ volatile("push %rdi");
+  __asm__ volatile("push %rbx");
+  __asm__ volatile("push %rax");
+  __asm__ volatile("push %rsi");
+
   ((compiled_function)ptr)(BF_DATA);
+
+  __asm__ volatile("pop %rsi");
+  __asm__ volatile("pop %rax");
+  __asm__ volatile("pop %rbx");
+  __asm__ volatile("pop %rdi");
 
   asm_free(assembler);
   munmap(ptr, size * sizeof(uint8_t));

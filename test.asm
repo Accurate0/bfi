@@ -1,3 +1,3 @@
 BITS 64
 
-lea rsi, [rbx]
+lea rsi, rbx
