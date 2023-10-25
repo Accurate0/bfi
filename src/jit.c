@@ -58,6 +58,8 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
         break;
 
       case CMD_OUTPUT_BYTE:
+        // TODO: handle count
+        // do in 1 syscall instead of many?
         // mov rbx, rdi
         asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x89);
