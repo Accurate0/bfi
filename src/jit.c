@@ -91,6 +91,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
         break;
 
       case CMD_INPUT_BYTE:
+        TODO();
         break;
 
       case CMD_OPT_CLEAR:
@@ -126,6 +127,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
       // je current_addr + size_of_code
       // continue otherwise
       // at end jmp back to beginning
+      TODO();
     } break;
 
     default:
