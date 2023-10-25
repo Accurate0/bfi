@@ -1,6 +1,6 @@
 #pragma once
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 void io_open_file(const char *path);
 int8_t io_read_next();

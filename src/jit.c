@@ -1,13 +1,13 @@
-#include "asm.h"
-#include <stddef.h>
-#include <string.h>
-#include <unistd.h>
 #define _GNU_SOURCE
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
+#include "asm.h"
 #include "ast.h"
 #include "jit.h"
 #include "util.h"
