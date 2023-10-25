@@ -17,6 +17,22 @@ static int32_t BF_DATA[30000] = {
     0,
 };
 
+#define SAVE_REGISTERS()                                                       \
+  do {                                                                         \
+    __asm__ volatile("push %rdi");                                             \
+    __asm__ volatile("push %rbx");                                             \
+    __asm__ volatile("push %rax");                                             \
+    __asm__ volatile("push %rsi");                                             \
+  } while (0)
+
+#define RESTORE_REGISTERS()                                                    \
+  do {                                                                         \
+    __asm__ volatile("pop %rsi");                                              \
+    __asm__ volatile("pop %rax");                                              \
+    __asm__ volatile("pop %rbx");                                              \
+    __asm__ volatile("pop %rdi");                                              \
+  } while (0)
+
 static void jit_generate_code(node_t *node, asm_t *assembler) {
   LIST_FOREACH(node->children, c) {
     node_t *node = c->value;
@@ -157,17 +173,11 @@ void jit_run(node_t *node) {
   fflush(stdout);
 #endif
 
-  __asm__ volatile("push %rdi");
-  __asm__ volatile("push %rbx");
-  __asm__ volatile("push %rax");
-  __asm__ volatile("push %rsi");
+  SAVE_REGISTERS();
 
   ((compiled_function)ptr)(BF_DATA);
 
-  __asm__ volatile("pop %rsi");
-  __asm__ volatile("pop %rax");
-  __asm__ volatile("pop %rbx");
-  __asm__ volatile("pop %rdi");
+  RESTORE_REGISTERS();
 
   asm_free(assembler);
   munmap(ptr, size * sizeof(uint8_t));
