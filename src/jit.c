@@ -1,4 +1,5 @@
 #include "asm.h"
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 #define _GNU_SOURCE
@@ -16,9 +17,10 @@ static int32_t BF_DATA[30000] = {
     0,
 };
 
-static size_t jit_generate_code(node_t *node, asm_t *assembler, size_t size) {
+static void jit_generate_code(node_t *node, asm_t *assembler) {
   LIST_FOREACH(node->children, c) {
     node_t *node = c->value;
+    uint32_t count = node->count;
 
     // RDI is data
     switch (node->type) {
@@ -28,46 +30,75 @@ static size_t jit_generate_code(node_t *node, asm_t *assembler, size_t size) {
     case EXPR_OPT: {
       switch (node->value) {
       case CMD_INCREMENT_PTR:
-        // inc rdi
-        asm_emit8(assembler, 0xFF);
-        asm_emit8(assembler, 0xC7);
-        size += 2;
+        // add edi, count
+        asm_emit8(assembler, 0x81);
+        asm_emit8(assembler, 0x07);
+        asm_emit32(assembler, count);
         break;
 
       case CMD_DECREMENT_PTR:
-        // dec rdi
-        asm_emit8(assembler, 0xFF);
-        asm_emit8(assembler, 0xCF);
-        size += 2;
+        // sub edi, count
+        asm_emit8(assembler, 0x81);
+        asm_emit8(assembler, 0x2F);
+        asm_emit32(assembler, count);
         break;
 
       case CMD_INCREMENT_DATA:
-        // inc [rdi]
-        asm_emit8(assembler, 0xFF);
+        // add [edi], count
+        asm_emit8(assembler, 0x81);
         asm_emit8(assembler, 0x07);
-        size += 2;
+        asm_emit32(assembler, count);
         break;
 
       case CMD_DECREMENT_DATA:
-        // dec [rdi]
-        asm_emit8(assembler, 0xFF);
-        asm_emit8(assembler, 0x0F);
-        size += 2;
+        // sub [edi], count
+        asm_emit8(assembler, 0x81);
+        asm_emit8(assembler, 0x2F);
+        asm_emit32(assembler, count);
         break;
 
       case CMD_OUTPUT_BYTE:
-        // need to preserve rdi to syscall
+        // mov rdx, rdi
+        asm_emit8(assembler, 0x48);
+        asm_emit8(assembler, 0x89);
+        asm_emit8(assembler, 0xFA);
+
+        // mov rdi, [rdi]
+        asm_emit8(assembler, 0xC7);
+        asm_emit8(assembler, 0x07);
+        asm_emit32(assembler, 67);
+
+        // mov rax, address
+        asm_emit8(assembler, 0x48);
+        asm_emit8(assembler, 0xC7);
+        asm_emit8(assembler, 0xC0);
+        asm_emit32(assembler, (uint64_t)putchar);
+
+        // call rax
+        asm_emit8(assembler, 0xFF);
+        asm_emit8(assembler, 0xD0);
+
+        // mov rdi, rdx
+        asm_emit8(assembler, 0x48);
+        asm_emit8(assembler, 0x89);
+        asm_emit8(assembler, 0xD7);
         break;
 
       case CMD_INPUT_BYTE:
         break;
 
       case CMD_OPT_CLEAR:
-        // mov dword [rdi], 0x0
+        // mov dword [edi], 0x0
         asm_emit8(assembler, 0xC7);
         asm_emit8(assembler, 0x07);
         asm_emit32(assembler, 0x00);
-        size += 4;
+        break;
+
+      case CMD_OPT_SCAN_LEFT:
+        TODO();
+        break;
+      case CMD_OPT_SCAN_RIGHT:
+        TODO();
         break;
 
       default:
@@ -96,25 +127,24 @@ static size_t jit_generate_code(node_t *node, asm_t *assembler, size_t size) {
     }
   }
 
+  // ret
   asm_emit8(assembler, 0xC3);
-  size += 1;
-
-  return size;
 }
 
 void jit_run(node_t *node) {
   asm_t *assembler = asm_init();
-  size_t size = jit_generate_code(node, assembler, 0);
+  jit_generate_code(node, assembler);
+  size_t size = assembler->size;
 
   void *ptr =
       mmap(NULL, size * sizeof(uint8_t), PROT_READ | PROT_WRITE | PROT_EXEC,
            MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   memcpy(ptr, assembler->output, size * sizeof(uint8_t));
-  write(STDOUT_FILENO, ptr, size * sizeof(uint8_t));
-  fflush(stdout);
+  // write(STDOUT_FILENO, ptr, size * sizeof(uint8_t));
+  // fflush(stdout);
 
   ((compiled_function)ptr)(BF_DATA);
 
   asm_free(assembler);
-  munmap(ptr, size);
+  munmap(ptr, size * sizeof(uint8_t));
 }
