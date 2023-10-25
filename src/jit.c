@@ -58,37 +58,43 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
         break;
 
       case CMD_OUTPUT_BYTE:
-        // mov rdx, rdi
+        // mov rbx, rdi
         asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x89);
-        asm_emit8(assembler, 0xFA);
+        asm_emit8(assembler, 0xFB);
 
-        // mov rdi, [rdi]
-        asm_emit8(assembler, 0xC7);
-        asm_emit8(assembler, 0x07);
-        asm_emit32(assembler, 67);
+        // mov eax, 1
+        asm_emit8(assembler, 0xB8);
+        asm_emit32(assembler, 1);
 
-        // mov rax, address
+        // mov edi, 1
+        asm_emit8(assembler, 0xBF);
+        asm_emit32(assembler, 1);
+
+        // lea rsi, [rdi]
         asm_emit8(assembler, 0x48);
-        asm_emit8(assembler, 0xC7);
-        asm_emit8(assembler, 0xC0);
-        asm_emit32(assembler, (uint64_t)putchar);
+        asm_emit8(assembler, 0x8D);
+        asm_emit8(assembler, 0x33);
 
-        // call rax
-        asm_emit8(assembler, 0xFF);
-        asm_emit8(assembler, 0xD0);
+        // mov edx, 1
+        asm_emit8(assembler, 0xBA);
+        asm_emit32(assembler, 1);
 
-        // mov rdi, rdx
+        // syscall
+        asm_emit8(assembler, 0x0F);
+        asm_emit8(assembler, 0x05);
+
+        // mov rdi, rbx
         asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x89);
-        asm_emit8(assembler, 0xD7);
+        asm_emit8(assembler, 0xDF);
         break;
 
       case CMD_INPUT_BYTE:
         break;
 
       case CMD_OPT_CLEAR:
-        // mov dword [edi], 0x0
+        // mov dword [rdi], 0x0
         asm_emit8(assembler, 0xC7);
         asm_emit8(assembler, 0x07);
         asm_emit32(assembler, 0x00);
@@ -140,8 +146,11 @@ void jit_run(node_t *node) {
       mmap(NULL, size * sizeof(uint8_t), PROT_READ | PROT_WRITE | PROT_EXEC,
            MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   memcpy(ptr, assembler->output, size * sizeof(uint8_t));
-  // write(STDOUT_FILENO, ptr, size * sizeof(uint8_t));
-  // fflush(stdout);
+
+#if DEBUG
+  write(STDERR_FILENO, ptr, size * sizeof(uint8_t));
+  fflush(stdout);
+#endif
 
   ((compiled_function)ptr)(BF_DATA);
 

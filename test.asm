@@ -1,3 +1,3 @@
 BITS 64
 
-mov rax, dword 0x0
+lea rsi, [rbx]
