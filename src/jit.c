@@ -40,7 +40,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
         asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x81);
         asm_emit8(assembler, 0xC7);
-        asm_emit32(assembler, count * sizeof(void *));
+        asm_emit32(assembler, count * sizeof(int64_t));
         break;
 
       case CMD_DECREMENT_PTR:
@@ -48,7 +48,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
         asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x81);
         asm_emit8(assembler, 0xEF);
-        asm_emit32(assembler, count * sizeof(void *));
+        asm_emit32(assembler, count * sizeof(int64_t));
         break;
 
       case CMD_INCREMENT_DATA:
