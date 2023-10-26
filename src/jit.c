@@ -12,8 +12,8 @@
 #include "jit.h"
 #include "util.h"
 
-typedef void (*compiled_function)(int32_t *data);
-static int32_t BF_DATA[30000] = {
+typedef void (*compiled_function)(int64_t *data);
+static int64_t BF_DATA[30000] = {
     0,
 };
 
