@@ -17,4 +17,4 @@ pros:
 cons:
   - naive
   - minimal optimisations
-  - memory hungry due to AST (although gcc allocates 188,662 bytes with no input, are we the evil ones?)
+  - memory hungry due to AST
