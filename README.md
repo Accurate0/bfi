@@ -1,4 +1,4 @@
-# bfi - brainfuck interpreter
+# bfi - brainfuck interpreter/jit
 
 TODO:
   - [x] interpret AST at runtime
