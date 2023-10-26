@@ -9,15 +9,6 @@ TODO:
       - [ ] multiplication loops
       - [x] scan loops
       - [ ] operation offsets
-  - [ ] simplify or potentially remove AST (memory)
-  - [ ] try guessing how much memory is needed for execution
-  - [ ] dynamically adjust memory during execution (incase guess fails)
-  - [ ] generate code and execute in memory
-  - [ ] generate ELF (if even possible)
-  - [ ] generate LLVM IR to feed to LLVM
-  - [ ] expand this todo list
-  - [ ] remove recursion to handle bigger programs (haven't had a stack overflow yet but...)
-  - [ ] switch to an objectively better build system (cmake/meson + ninja)
 
 pros:
   - simple
