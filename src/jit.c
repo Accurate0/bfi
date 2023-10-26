@@ -102,7 +102,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
         break;
 
       case CMD_INPUT_BYTE:
-        // TODO();
+        TODO();
         break;
 
       case CMD_OPT_CLEAR:
