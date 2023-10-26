@@ -58,6 +58,16 @@ void asm_emit16(asm_t *this, uint16_t value) {
   this->output[this->size++] = (value >> 8) & 0xff;
 }
 
+void asm_copy_from(asm_t *this, asm_t *other) {
+  if (other->size >= (this->alloc - this->size)) {
+    this->alloc += other->size + 100;
+    this->output = realloc(this->output, sizeof(uint8_t) * (this->alloc));
+  }
+
+  memcpy(this->output + this->size, other->output, other->size);
+  this->size += other->size;
+}
+
 void asm_free(asm_t *this) {
   free(this->output);
   free(this);

@@ -4,3 +4,4 @@ test
 asm.out
 vgcore.*
 .gdb_history
+asm

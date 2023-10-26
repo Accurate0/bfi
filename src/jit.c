@@ -22,7 +22,8 @@ static int32_t BF_DATA[30000] = {
     __asm__ volatile("" : : : args);                                           \
   } while (0)
 
-static void jit_generate_code(node_t *node, asm_t *assembler) {
+static void jit_generate_code(node_t *node, asm_t *assembler,
+                              bool should_return) {
   LIST_FOREACH(node->children, c) {
     node_t *node = c->value;
     uint32_t count = node->count;
@@ -36,16 +37,18 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
       switch (node->value) {
       case CMD_INCREMENT_PTR:
         // add edi, count
+        asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x81);
-        asm_emit8(assembler, 0x07);
-        asm_emit32(assembler, count);
+        asm_emit8(assembler, 0xC7);
+        asm_emit32(assembler, count * sizeof(void *));
         break;
 
       case CMD_DECREMENT_PTR:
         // sub edi, count
+        asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x81);
-        asm_emit8(assembler, 0x2F);
-        asm_emit32(assembler, count);
+        asm_emit8(assembler, 0xEF);
+        asm_emit32(assembler, count * sizeof(void *));
         break;
 
       case CMD_INCREMENT_DATA:
@@ -99,7 +102,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
         break;
 
       case CMD_INPUT_BYTE:
-        TODO();
+        // TODO();
         break;
 
       case CMD_OPT_CLEAR:
@@ -122,20 +125,43 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
     } break;
 
     case EXPR_LOOP: {
-      // loop is something like
-      // while(*RDI != 0) = [
-      // when RDI == 0 JMP to ] + 1
-      // else JMP to [ + 1
-      // execute inner code ...
-      // jit_generate_code
-      // jmp back to start ]
+      asm_t *loop_body = asm_init();
+      jit_generate_code(node, loop_body, false);
+      size_t start_of_loop = assembler->size;
 
-      // cmp [register] 0
-      // size of code = recursively generate code
-      // je current_addr + size_of_code
-      // continue otherwise
-      // at end jmp back to beginning
-      TODO();
+      // mov rcx,[rdi]
+      asm_emit8(assembler, 0x48);
+      asm_emit8(assembler, 0x8B);
+      asm_emit8(assembler, 0x0F);
+
+      // test rcx, rcx
+      asm_emit8(assembler, 0x48);
+      asm_emit8(assembler, 0x85);
+      asm_emit8(assembler, 0xC9);
+
+      // jz
+      asm_emit8(assembler, 0x0F);
+      asm_emit8(assembler, 0x84);
+      asm_emit32(assembler, loop_body->size + 6);
+
+      asm_copy_from(assembler, loop_body);
+
+      // mov rcx,[rdi]
+      asm_emit8(assembler, 0x48);
+      asm_emit8(assembler, 0x8B);
+      asm_emit8(assembler, 0x0F);
+
+      // test rcx, rcx
+      asm_emit8(assembler, 0x48);
+      asm_emit8(assembler, 0x85);
+      asm_emit8(assembler, 0xC9);
+
+      // jnz
+      asm_emit8(assembler, 0x0F);
+      asm_emit8(assembler, 0x85);
+      asm_emit32(assembler, start_of_loop - (assembler->size + 4));
+
+      asm_free(loop_body);
     } break;
 
     default:
@@ -144,12 +170,14 @@ static void jit_generate_code(node_t *node, asm_t *assembler) {
   }
 
   // ret
-  asm_emit8(assembler, 0xC3);
+  if (should_return) {
+    asm_emit8(assembler, 0xC3);
+  }
 }
 
 void jit_run(node_t *node) {
   asm_t *assembler = asm_init();
-  jit_generate_code(node, assembler);
+  jit_generate_code(node, assembler, true);
   size_t size = assembler->size;
 
   void *ptr =
@@ -162,7 +190,7 @@ void jit_run(node_t *node) {
   fflush(stdout);
 #endif
 
-  CLOBBER_REGISTERS("rdi", "rbx", "rax", "rsi");
+  CLOBBER_REGISTERS("rdi", "rbx", "rax", "rsi", "rcx");
   ((compiled_function)ptr)(BF_DATA);
 
   asm_free(assembler);
