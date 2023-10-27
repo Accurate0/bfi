@@ -52,14 +52,16 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
         break;
 
       case CMD_INCREMENT_DATA:
-        // add [edi], count
+        // add qword [rdi], count
+        asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x81);
         asm_emit8(assembler, 0x07);
         asm_emit32(assembler, count);
         break;
 
       case CMD_DECREMENT_DATA:
-        // sub [edi], count
+        // sub qword [rdi], count
+        asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0x81);
         asm_emit8(assembler, 0x2F);
         asm_emit32(assembler, count);

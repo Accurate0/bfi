@@ -11,7 +11,8 @@ test rcx, rcx
 je   $ + 0x1
 jmp  0x14
 
-add dword rdi, qword 0x2
-sub dword rdi, qword 0x2
+add qword [rdi], 2147483646
+sub qword [rdi], 2147483646
+
 
 end:
