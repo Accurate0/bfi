@@ -1,4 +1,4 @@
 | Command | Mean [s] | Min [s] | Max [s] | Relative |
 |:---|---:|---:|---:|---:|
-| `./bfi -i tests/fractal.b` | 4.901 ± 0.119 | 4.693 | 5.122 | 8.18 ± 0.29 |
-| `./bfi -j tests/fractal.b` | 0.599 ± 0.015 | 0.575 | 0.615 | 1.00 |
+| `./bfi -i tests/fractal.b` | 4.997 ± 0.048 | 4.893 | 5.081 | 8.23 ± 0.09 |
+| `./bfi -j tests/fractal.b` | 0.607 ± 0.003 | 0.604 | 0.612 | 1.00 |

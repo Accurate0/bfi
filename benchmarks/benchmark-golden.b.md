@@ -1,4 +1,4 @@
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `./bfi -i tests/golden.b` | 98.4 ± 1.6 | 97.1 | 103.9 | 10.66 ± 0.23 |
-| `./bfi -j tests/golden.b` | 9.2 ± 0.1 | 8.9 | 9.7 | 1.00 |
+| `./bfi -i tests/golden.b` | 98.3 ± 1.3 | 95.7 | 101.4 | 10.63 ± 0.24 |
+| `./bfi -j tests/golden.b` | 9.2 ± 0.2 | 8.9 | 9.9 | 1.00 |

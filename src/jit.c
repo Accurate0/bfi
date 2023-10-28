@@ -104,7 +104,39 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
         break;
 
       case CMD_INPUT_BYTE:
-        TODO();
+        // mov rbx, rdi
+        asm_emit8(assembler, 0x48);
+        asm_emit8(assembler, 0x89);
+        asm_emit8(assembler, 0xFB);
+
+        // mov eax, 1
+        asm_emit8(assembler, 0xB8);
+        asm_emit32(assembler, 0);
+
+        // mov edi, 1
+        asm_emit8(assembler, 0xBF);
+        asm_emit32(assembler, 1);
+
+        // lea rsi, rbx
+        asm_emit8(assembler, 0x48);
+        asm_emit8(assembler, 0x8D);
+        asm_emit8(assembler, 0x33);
+
+        // mov edx, 1
+        asm_emit8(assembler, 0xBA);
+        asm_emit32(assembler, 1);
+
+        // FIXME: syscall in a loop lmao
+        for (uint32_t i = 0; i < count; i++) {
+          // syscall
+          asm_emit8(assembler, 0x0F);
+          asm_emit8(assembler, 0x05);
+        }
+
+        // mov rdi, rbx
+        asm_emit8(assembler, 0x48);
+        asm_emit8(assembler, 0x89);
+        asm_emit8(assembler, 0xDF);
         break;
 
       case CMD_OPT_CLEAR:
