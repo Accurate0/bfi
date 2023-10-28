@@ -108,7 +108,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
         break;
 
       case CMD_OPT_CLEAR:
-        // mov dword [rdi], 0x0
+        // mov qword [rdi], 0x0
         asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0xC7);
         asm_emit8(assembler, 0x07);
