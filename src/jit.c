@@ -12,8 +12,8 @@
 #include "jit.h"
 #include "util.h"
 
-typedef void (*compiled_function)(int64_t *data);
-static int64_t BF_DATA[30000] = {
+typedef void (*compiled_function)(uint64_t *data);
+static uint64_t BF_DATA[30000] = {
     0,
 };
 
@@ -109,6 +109,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
 
       case CMD_OPT_CLEAR:
         // mov dword [rdi], 0x0
+        asm_emit8(assembler, 0x48);
         asm_emit8(assembler, 0xC7);
         asm_emit8(assembler, 0x07);
         asm_emit32(assembler, 0x00);
@@ -130,7 +131,6 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
       asm_t *loop_body = asm_init();
       jit_generate_code(node, loop_body, false);
       size_t start_of_loop = assembler->size;
-
       // mov rcx,[rdi]
       asm_emit8(assembler, 0x48);
       asm_emit8(assembler, 0x8B);

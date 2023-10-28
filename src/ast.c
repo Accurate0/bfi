@@ -129,12 +129,16 @@ void ast_optimise(node_t *root) {
 
         // figure out why node count is need to prevent
         // hanoi from going ham
-        if (node->count == 1 && first->type == EXPR_PTR) {
+        // FIXME: this optimisation does not work
+
+#if 0
+        if (first->type == EXPR_PTR) {
           if (first->value == CMD_INCREMENT_PTR)
             optimise = CMD_OPT_SCAN_RIGHT;
           else if (first->value == CMD_DECREMENT_PTR)
             optimise = CMD_OPT_SCAN_LEFT;
         }
+#endif
       }
 
       // if an optimisation was detected on this loop
