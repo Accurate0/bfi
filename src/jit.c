@@ -109,7 +109,7 @@ static void jit_generate_code(node_t *node, asm_t *assembler,
         asm_emit8(assembler, 0x89);
         asm_emit8(assembler, 0xFB);
 
-        // mov eax, 1
+        // mov eax, 0
         asm_emit8(assembler, 0xB8);
         asm_emit32(assembler, 0);
 
